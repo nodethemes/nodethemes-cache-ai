@@ -97,6 +97,34 @@ class NTCA_Optimizer {
 	}
 
 	/**
+	 * Run a replacement only on the page's own HTML, never inside <script>, <style>, <template> or <textarea>.
+	 * Scripts often hold HTML in strings (for example "<img src=\\"...\\">" in JSON); changing a tag there
+	 * would break the script. For <script> blocks, $on_script (if given) receives only the opening tag.
+	 *
+	 * @param string        $html      HTML.
+	 * @param callable      $outside   Callback for the parts outside these blocks.
+	 * @param callable|null $on_script Callback for the opening tag of each <script> block.
+	 * @return string
+	 */
+	private static function outside_code( $html, $outside, $on_script = null ) {
+		$parts = preg_split( '#(<script\b[^>]*>.*?</script\s*>|<style\b[^>]*>.*?</style\s*>|<template\b[^>]*>.*?</template\s*>|<textarea\b[^>]*>.*?</textarea\s*>)#is', $html, -1, PREG_SPLIT_DELIM_CAPTURE );
+		if ( ! is_array( $parts ) ) {
+			return $html; // The page is too large or not valid UTF-8 for the pattern: leave it as it is.
+		}
+		$out = '';
+		foreach ( $parts as $i => $part ) {
+			if ( 0 === $i % 2 ) {
+				$out .= call_user_func( $outside, $part );
+			} elseif ( $on_script && preg_match( '#^(<script\b[^>]*>)(.*)$#is', $part, $m ) ) {
+				$out .= call_user_func( $on_script, $m[1] ) . $m[2];
+			} else {
+				$out .= $part;
+			}
+		}
+		return $out;
+	}
+
+	/**
 	 * Add defer to external scripts.
 	 *
 	 * @param string $html    HTML.
@@ -104,10 +132,12 @@ class NTCA_Optimizer {
 	 * @return string
 	 */
 	public static function defer_js( $html, $exclude ) {
-		return preg_replace_callback(
-			'#<script\b[^>]*>#i',
-			function ( $m ) use ( $exclude ) {
-				$tag = $m[0];
+		return self::outside_code(
+			$html,
+			function ( $part ) {
+				return $part;
+			},
+			function ( $tag ) use ( $exclude ) {
 				$src = self::attr( $tag, 'src' );
 				if ( null === $src || '' === $src ) {
 					return $tag;
@@ -129,8 +159,7 @@ class NTCA_Optimizer {
 					}
 				}
 				return self::add_attr( $tag, 'script', 'defer' );
-			},
-			$html
+			}
 		);
 	}
 
@@ -149,9 +178,12 @@ class NTCA_Optimizer {
 		$head = substr( $html, 0, $body );
 		$rest = substr( $html, $body );
 		$n    = 0;
-		$rest = preg_replace_callback(
-			'#<img\b[^>]*>#i',
-			function ( $m ) use ( &$n, $skip ) {
+		$rest = self::outside_code(
+			$rest,
+			function ( $part ) use ( &$n, $skip ) {
+				return preg_replace_callback(
+					'#<img\b[^>]*>#i',
+					function ( $m ) use ( &$n, $skip ) {
 				$tag = $m[0];
 				++$n;
 				if ( $n <= $skip ) {
@@ -169,8 +201,10 @@ class NTCA_Optimizer {
 					$add .= ' decoding="async"';
 				}
 				return self::add_attr( $tag, 'img', $add );
-			},
-			$rest
+					},
+					$part
+				);
+			}
 		);
 		return $head . $rest;
 	}
@@ -182,16 +216,21 @@ class NTCA_Optimizer {
 	 * @return string
 	 */
 	public static function lazy_iframes( $html ) {
-		return preg_replace_callback(
-			'#<iframe\b[^>]*>#i',
-			function ( $m ) {
-				$tag = $m[0];
-				if ( null !== self::attr( $tag, 'loading' ) || null !== self::attr( $tag, 'data-no-lazy' ) ) {
-					return $tag;
-				}
-				return self::add_attr( $tag, 'iframe', 'loading="lazy"' );
-			},
-			$html
+		return self::outside_code(
+			$html,
+			function ( $part ) {
+				return preg_replace_callback(
+					'#<iframe\b[^>]*>#i',
+					function ( $m ) {
+						$tag = $m[0];
+						if ( null !== self::attr( $tag, 'loading' ) || null !== self::attr( $tag, 'data-no-lazy' ) ) {
+							return $tag;
+						}
+						return self::add_attr( $tag, 'iframe', 'loading="lazy"' );
+					},
+					$part
+				);
+			}
 		);
 	}
 

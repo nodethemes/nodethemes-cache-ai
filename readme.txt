@@ -4,7 +4,7 @@ Tags: cache, page cache, performance, minify, lazy load
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.2
+Stable tag: 1.1.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -92,6 +92,9 @@ When this optimization is on and a page uses a Google Fonts stylesheet, your ser
 * Deactivating the plugin removes the cached pages, the advanced-cache.php drop-in and the WP_CACHE line it added. Uninstalling also removes its settings and history.
 
 == Changelog ==
+
+= 1.1.3 =
+* Fix: lazy loading and defer no longer change <img>, <iframe> or <script> tags that appear inside a script, style, template or textarea (for example HTML stored in a JavaScript string). Before, this could cause "SyntaxError: Unexpected identifier 'lazy'", and the safe test reported the page as broken.
 
 = 1.1.2 =
 * Updates are now delivered from nodethemes.com: new versions appear in Dashboard > Updates and can be installed with one click or with auto-updates. The download is checked (SHA-256) before it is installed.

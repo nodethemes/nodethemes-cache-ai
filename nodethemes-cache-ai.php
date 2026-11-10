@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       NodeThemes Cache AI
  * Description:       Page cache, HTML/CSS minify, script defer and lazy loading for WordPress and WooCommerce, with a safe preview test in your browser and one-click rollback, so speed changes never break your live site.
- * Version:           1.1.2
+ * Version:           1.1.3
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            NodeThemes
@@ -21,7 +21,7 @@ if ( defined( 'NTCA_VERSION' ) ) {
 	return;
 }
 
-define( 'NTCA_VERSION', '1.1.2' );
+define( 'NTCA_VERSION', '1.1.3' );
 define( 'NTCA_FILE', __FILE__ );
 define( 'NTCA_DIR', plugin_dir_path( __FILE__ ) );
 define( 'NTCA_URL', plugin_dir_url( __FILE__ ) );
