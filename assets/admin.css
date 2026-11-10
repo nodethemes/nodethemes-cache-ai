@@ -1,0 +1,32 @@
+.ntca-wrap{max-width:1100px}
+.ntca-head{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin:18px 0 10px;padding:22px 26px;border-radius:14px;background:linear-gradient(135deg,#0f766e,#2563eb);color:#fff}
+.ntca-head h1{color:#fff;margin:0;font-size:22px;line-height:1.3;padding:0}
+.ntca-head p{margin:4px 0 0;color:#e0f2fe}
+.ntca-ver{font-size:12px;background:rgba(255,255,255,.2);padding:2px 9px;border-radius:20px;vertical-align:middle}
+.ntca-pro{display:inline-block;font-size:10px;font-weight:700;line-height:1.6;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;border-radius:4px;padding:0 6px;vertical-align:middle;letter-spacing:.03em}
+.ntca-tabs{margin-bottom:16px}
+.ntca-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-bottom:16px}
+.ntca-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px 22px;margin-bottom:16px;box-sizing:border-box}
+.ntca-grid .ntca-card{margin-bottom:0}
+.ntca-card h2{margin:0 0 10px;font-size:16px}
+.ntca-card h3{margin:0 0 6px;font-size:14px}
+.ntca-big{font-size:26px;font-weight:700;margin:4px 0 8px}
+.ntca-ok{color:#15803d}.ntca-bad{color:#b91c1c}.ntca-running{color:#1d4ed8}
+.ntca-list{margin:0 0 10px}.ntca-list li{margin:0 0 4px}.ntca-list .dashicons{color:#16a34a}
+.ntca-form .form-table th{width:230px}
+.ntca-switch{display:block}
+.ntca-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.ntca-run{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
+.ntca-run-text{flex:1;min-width:260px}
+.ntca-stage{overflow:hidden;border:1px solid #cbd5e1;border-radius:8px;background:#f8fafc;position:relative}
+.ntca-stage iframe{border:0;background:#fff;display:block}
+.ntca-bar{height:6px;background:#e2e8f0;border-radius:6px;overflow:hidden;margin:6px 0 14px}
+.ntca-bar span{display:block;height:100%;width:0;background:#2563eb;transition:width .3s}
+.ntca-page{border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;margin:0 0 8px}
+.ntca-page.is-ok .dashicons{color:#16a34a}.ntca-page.is-bad{border-color:#fecaca;background:#fef2f2}.ntca-page.is-bad .dashicons{color:#dc2626}
+.ntca-page ul{margin:6px 0 0 22px;list-style:disc}
+.ntca-pro-box{background:#f8fbff;border:1px solid #dbe4f0;border-left:4px solid #2563eb;border-radius:10px;padding:12px 14px}
+.ntca-lock{margin:8px 8px 0 0!important}.ntca-lock .dashicons{font-size:16px;line-height:1.9}
+.ntca-feature h3 .dashicons{color:#94a3b8}
+@media (max-width:782px){.ntca-form .form-table th{width:auto}.ntca-head{padding:16px}}
+.ntca-head .button{background:#fff;color:#0f172a;border-color:#fff}.ntca-head .button:hover{background:#e0f2fe;color:#0f172a}
