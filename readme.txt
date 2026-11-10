@@ -4,7 +4,7 @@ Tags: cache, page cache, performance, minify, lazy load
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -69,7 +69,15 @@ No. Pro is installed next to this plugin and uses the same settings and history.
 
 == External services ==
 
-The preview test runs in your own browser against your own site. The plugin connects to one external service, and only when you switch the option on:
+The preview test runs in your own browser against your own site.
+
+= Update check (nodethemes.com) =
+
+The free plugin only contacts nodethemes.com to check for new versions of itself (about twice a day, and when you click "Check again" in Dashboard > Updates). It sends the plugin's package name and its installed version; no site content or visitor data is sent. New versions appear in Dashboard > Updates like any other plugin.
+
+* NodeThemes: [Terms](https://nodethemes.com/terms/), [Privacy Policy](https://nodethemes.com/privacy-policy/)
+
+The plugin connects to one more external service, and only when you switch the option on:
 
 = Google Fonts (only with "Host Google Fonts on your own site") =
 
@@ -84,6 +92,9 @@ When this optimization is on and a page uses a Google Fonts stylesheet, your ser
 * Deactivating the plugin removes the cached pages, the advanced-cache.php drop-in and the WP_CACHE line it added. Uninstalling also removes its settings and history.
 
 == Changelog ==
+
+= 1.1.2 =
+* Updates are now delivered from nodethemes.com: new versions appear in Dashboard > Updates and can be installed with one click or with auto-updates. The download is checked (SHA-256) before it is installed.
 
 = 1.1.1 =
 * The safe test also reports the errors a page already has without the new settings, so the Pro guard can ignore them.

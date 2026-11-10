@@ -2,13 +2,14 @@
 /**
  * Plugin Name:       NodeThemes Cache AI
  * Description:       Page cache, HTML/CSS minify, script defer and lazy loading for WordPress and WooCommerce, with a safe preview test in your browser and one-click rollback, so speed changes never break your live site.
- * Version:           1.1.1
+ * Version:           1.1.2
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            NodeThemes
  * Author URI:        https://nodethemes.com/
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+ * Update URI:        https://nodethemes.com/nodethemes-cache-ai
  * Text Domain:       nodethemes-cache-ai
  *
  * @package NodeThemes_Cache_AI
@@ -20,7 +21,7 @@ if ( defined( 'NTCA_VERSION' ) ) {
 	return;
 }
 
-define( 'NTCA_VERSION', '1.1.1' );
+define( 'NTCA_VERSION', '1.1.2' );
 define( 'NTCA_FILE', __FILE__ );
 define( 'NTCA_DIR', plugin_dir_path( __FILE__ ) );
 define( 'NTCA_URL', plugin_dir_url( __FILE__ ) );
@@ -47,6 +48,8 @@ require_once NTCA_DIR . 'includes/class-ntca-fonts.php';
 require_once NTCA_DIR . 'includes/class-ntca-db.php';
 require_once NTCA_DIR . 'includes/class-ntca-tweaks.php';
 require_once NTCA_DIR . 'includes/class-ntca-admin.php';
+require_once NTCA_DIR . 'includes/class-ntca-updater.php';
+NTCA_Free_Updater::boot( NTCA_FILE, NTCA_VERSION, NTCA_PRO_URL );
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	require_once NTCA_DIR . 'includes/class-ntca-cli.php';
 	WP_CLI::add_command( 'ntca', 'NTCA_CLI' );
