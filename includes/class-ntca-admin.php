@@ -540,6 +540,27 @@ class NTCA_Admin {
 		$opts    = NTCA_Settings::optimizations();
 		$on      = array_keys( array_filter( $s['opts'] ) );
 		$last    = get_option( 'ntca_last_test', array() );
+		$probs   = $s['cache'] ? NTCA_Cache::health_problems() : array();
+		foreach ( $probs as $reason => $p ) {
+			$where = '' !== $p['url'] ? $p['url'] : '/';
+			switch ( $reason ) {
+				case 'no-close':
+					/* translators: %s: page address */
+					$msg = sprintf( __( 'Pages are not being cached: your theme does not finish its pages with </html> (seen on %s). A page without its end could be cut off, so it is never saved. Ask your theme author to end footer.php with </body></html> after wp_footer(), or switch to another theme to check.', 'nodethemes-cache-ai' ), $where );
+					break;
+				case 'cookie':
+					/* translators: 1: cookie name, 2: page address */
+					$msg = sprintf( __( 'Pages are not being cached: something on your site sets the cookie "%1$s" on every visit (seen on %2$s). A page that sets a cookie can be personal, so it is never saved. Find the plugin that sets it, or ask its author to set the cookie only when needed.', 'nodethemes-cache-ai' ), '' !== $p['d'] ? $p['d'] : '?', $where );
+					break;
+				case 'donotcache':
+					/* translators: %s: page address */
+					$msg = sprintf( __( 'Some pages are not cached because another plugin asks for that (DONOTCACHEPAGE, seen on %s). This is normal for forms or personal pages, but if it happens on every page, check which plugin sets it.', 'nodethemes-cache-ai' ), $where );
+					break;
+				default:
+					$msg = __( 'Pages could not be saved: the folder wp-content/cache/nodethemes-cache-ai is not writable. Ask your host to make wp-content writable.', 'nodethemes-cache-ai' );
+			}
+			echo '<div class="notice notice-' . ( 'donotcache' === $reason ? 'info' : 'error' ) . ' inline ntca-health"><p><strong>' . esc_html__( 'Page cache:', 'nodethemes-cache-ai' ) . '</strong> ' . esc_html( $msg ) . '</p></div>';
+		}
 		?>
 		<div class="ntca-grid">
 			<div class="ntca-card">

@@ -143,13 +143,20 @@ class NTCA_Cache {
 	 * @return string
 	 */
 	public static function end_buffer( $html ) {
-		if ( ! is_string( $html ) || '' === $html || false === stripos( $html, '<html' ) || false === stripos( $html, '</html>' ) ) {
+		if ( ! is_string( $html ) || '' === $html || false === stripos( $html, '<html' ) ) {
 			return $html;
 		}
 		foreach ( headers_list() as $h ) {
 			if ( 0 === stripos( $h, 'content-type:' ) && false === stripos( $h, 'text/html' ) ) {
 				return $html;
 			}
+		}
+		if ( false === stripos( $html, '</html>' ) ) {
+			// An unfinished page is never stored. When it happens on a page that could be cached, tell the admin why.
+			if ( '' === self::$skip && ! is_user_logged_in() && ! NTCA_Preview::current() && 200 === http_response_code() ) {
+				self::note( 'no-close' );
+			}
+			return $html;
 		}
 		$preview = NTCA_Preview::current();
 		if ( $preview ) {
@@ -162,10 +169,74 @@ class NTCA_Cache {
 		$out = NTCA_Settings::any_opt( $s ) ? NTCA_Optimizer::run( $html, $s ) : $html;
 		$out = (string) apply_filters( 'ntca_output', $out, $s );
 
-		if ( '' === self::$skip && ! ( defined( 'DONOTCACHEPAGE' ) && DONOTCACHEPAGE ) && 200 === http_response_code() && ! self::sets_cookie() ) {
-			self::store( $out );
+		if ( '' === self::$skip && 200 === http_response_code() ) {
+			if ( defined( 'DONOTCACHEPAGE' ) && DONOTCACHEPAGE ) {
+				self::note( 'donotcache' );
+			} elseif ( self::sets_cookie() ) {
+				self::note( 'cookie', self::cookie_name() );
+			} elseif ( self::store( $out ) ) {
+				self::note( 'ok' );
+			} else {
+				self::note( 'write' );
+			}
 		}
 		return $out;
+	}
+
+	/**
+	 * Remember why pages that could be cached were or were not stored, so the dashboard can explain it.
+	 * Written at most once every 10 minutes per reason, so busy sites do not write on every visit.
+	 *
+	 * @param string $reason ok|no-close|cookie|donotcache|write.
+	 * @param string $detail Extra detail (a cookie name).
+	 */
+	private static function note( $reason, $detail = '' ) {
+		$h   = get_option( 'ntca_cache_health', array() );
+		$h   = is_array( $h ) ? $h : array();
+		$now = time();
+		if ( isset( $h[ $reason ]['t'] ) && $now - (int) $h[ $reason ]['t'] < 600 ) {
+			return;
+		}
+		$uri          = isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+		$h[ $reason ] = array(
+			't'   => $now,
+			'url' => substr( (string) wp_parse_url( $uri, PHP_URL_PATH ), 0, 200 ),
+			'd'   => substr( sanitize_text_field( $detail ), 0, 80 ),
+		);
+		update_option( 'ntca_cache_health', $h, false );
+	}
+
+	/**
+	 * Problems from the last 24 hours that stop pages from being cached, newest first. A problem is dropped
+	 * once a page was stored after it (or after the cache was cleared because settings changed).
+	 *
+	 * @return array reason => array( t, url, d )
+	 */
+	public static function health_problems() {
+		$h  = get_option( 'ntca_cache_health', array() );
+		$h  = is_array( $h ) ? $h : array();
+		$ok = isset( $h['ok']['t'] ) ? (int) $h['ok']['t'] : 0;
+		$out = array();
+		foreach ( array( 'no-close', 'cookie', 'donotcache', 'write' ) as $r ) {
+			if ( isset( $h[ $r ]['t'] ) && (int) $h[ $r ]['t'] > time() - DAY_IN_SECONDS && (int) $h[ $r ]['t'] >= $ok - 600 ) {
+				$out[ $r ] = $h[ $r ];
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * Name of the first cookie this response sets.
+	 *
+	 * @return string
+	 */
+	private static function cookie_name() {
+		foreach ( headers_list() as $h ) {
+			if ( 0 === stripos( $h, 'set-cookie:' ) && preg_match( '/^set-cookie:\s*([^=;\s]+)/i', $h, $m ) ) {
+				return $m[1];
+			}
+		}
+		return '';
 	}
 
 	/**
@@ -186,14 +257,15 @@ class NTCA_Cache {
 	 * Write the cache file for this request.
 	 *
 	 * @param string $html Final HTML.
+	 * @return bool
 	 */
 	private static function store( $html ) {
 		$file = ntca_cache_file_for_request( ntca_serve_config() );
 		if ( '' === $file || ! NTCA_FS::mkdir( NTCA_CACHE_DIR ) || ! NTCA_FS::mkdir( dirname( $file ) ) ) {
-			return;
+			return false;
 		}
 		$stamp = "\n<!-- ntca: cached by NodeThemes Cache AI on " . gmdate( 'Y-m-d H:i:s' ) . ' UTC -->';
-		NTCA_FS::put( $file, $html . $stamp );
+		return (bool) NTCA_FS::put( $file, $html . $stamp );
 	}
 
 	/* ------------------------------------------------------------------
@@ -255,6 +327,7 @@ class NTCA_Cache {
 		} else {
 			NTCA_FS::rmdir( NTCA_CACHE_DIR, true );
 		}
+		delete_option( 'ntca_cache_health' ); // Start fresh: a theme or plugin change may have fixed the problem.
 		do_action( 'ntca_purged_all' );
 	}
 

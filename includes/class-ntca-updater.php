@@ -66,6 +66,8 @@ if ( ! class_exists( 'NTCA_Free_Updater' ) ) :
 			add_filter( 'plugins_api', array( $this, 'info' ), 20, 3 );
 			add_filter( 'upgrader_pre_download', array( $this, 'pre_download' ), 10, 3 );
 			add_action( 'upgrader_process_complete', array( $this, 'flush' ), 10, 0 );
+			// When WordPress clears its own update list (after installing or deleting plugins), ask again too.
+			add_action( 'delete_site_transient_update_plugins', array( $this, 'flush' ), 10, 0 );
 		}
 
 		/**
@@ -112,9 +114,9 @@ if ( ! class_exists( 'NTCA_Free_Updater' ) ) :
 			);
 			$data = is_wp_error( $res ) ? null : json_decode( (string) wp_remote_retrieve_body( $res ), true );
 			if ( ! is_array( $data ) || empty( $data['success'] ) || empty( $data['version'] ) || empty( $data['url'] ) ) {
-				// Server down or no release: remember for 1 hour, keep what we had before.
+				// Server down or no release: keep what we had before and ask again in 15 minutes.
 				$keep = is_array( $cached ) ? $cached : array();
-				set_site_transient( self::CACHE, $keep, HOUR_IN_SECONDS );
+				set_site_transient( self::CACHE, $keep, 15 * MINUTE_IN_SECONDS );
 				$mem = $keep;
 				return $keep ? $keep : null;
 			}
@@ -128,6 +130,7 @@ if ( ! class_exists( 'NTCA_Free_Updater' ) ) :
 				'requires_php' => isset( $data['requires_php'] ) ? sanitize_text_field( $data['requires_php'] ) : '',
 				'tested'       => isset( $data['tested'] ) ? sanitize_text_field( $data['tested'] ) : '',
 				'updated'      => isset( $data['updated'] ) ? sanitize_text_field( $data['updated'] ) : '',
+				'checked'      => time(),
 			);
 			set_site_transient( self::CACHE, $info, 12 * HOUR_IN_SECONDS );
 			$mem = $info;
@@ -145,6 +148,11 @@ if ( ! class_exists( 'NTCA_Free_Updater' ) ) :
 				return $transient;
 			}
 			$forced = is_admin() && isset( $_GET['force-check'] ) && current_user_can( 'update_plugins' ); // phpcs:ignore WordPress.Security.NonceVerification
+			if ( ! $forced && is_admin() && isset( $GLOBALS['pagenow'] ) && 'update-core.php' === $GLOBALS['pagenow'] && current_user_can( 'update_plugins' ) ) {
+				// Dashboard > Updates: ask again when the saved answer is more than a minute old.
+				$cached = get_site_transient( self::CACHE );
+				$forced = ! is_array( $cached ) || empty( $cached['checked'] ) || time() - (int) $cached['checked'] > MINUTE_IN_SECONDS;
+			}
 			$info   = $this->remote( $forced );
 			$item   = array(
 				'id'           => $this->basename,
