@@ -66,6 +66,31 @@ if ( ! function_exists( 'ntca_cache_file_for_request' ) ) {
 	}
 
 	/**
+	 * Did this request reach the site over HTTPS? Also understands the usual proxy and
+	 * Cloudflare headers. WordPress is not loaded here, so is_ssl() cannot be used.
+	 *
+	 * @return bool
+	 */
+	function ntca_serve_is_https() {
+		if ( isset( $_SERVER['HTTPS'] ) && '' !== $_SERVER['HTTPS'] && 'off' !== strtolower( (string) $_SERVER['HTTPS'] ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- only compared.
+			return true;
+		}
+		if ( isset( $_SERVER['SERVER_PORT'] ) && '443' === (string) $_SERVER['SERVER_PORT'] ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- only compared.
+			return true;
+		}
+		if ( isset( $_SERVER['HTTP_X_FORWARDED_PROTO'] ) && 'https' === strtolower( trim( explode( ',', (string) $_SERVER['HTTP_X_FORWARDED_PROTO'] )[0] ) ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- only compared.
+			return true;
+		}
+		if ( isset( $_SERVER['HTTP_X_FORWARDED_SSL'] ) && 'on' === strtolower( (string) $_SERVER['HTTP_X_FORWARDED_SSL'] ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- only compared.
+			return true;
+		}
+		if ( isset( $_SERVER['HTTP_CF_VISITOR'] ) && false !== stripos( (string) $_SERVER['HTTP_CF_VISITOR'], '"https"' ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- only matched.
+			return true;
+		}
+		return false;
+	}
+
+	/**
 	 * The cache file for the current request, or '' when this request must not be cached.
 	 *
 	 * @param array $cfg Cache settings.
@@ -88,6 +113,12 @@ if ( ! function_exists( 'ntca_cache_file_for_request' ) ) {
 			return '';
 		}
 		if ( ! empty( $cfg['hosts'] ) && ! in_array( $host, (array) $cfg['hosts'], true ) ) {
+			return '';
+		}
+		// An https site never serves or stores pages for http:// requests. A page built for an
+		// http:// request links its CSS and JS with http://, and browsers block those on the
+		// https:// page (the site then shows without its styles).
+		if ( isset( $cfg['scheme'] ) && 'https' === $cfg['scheme'] && ! ntca_serve_is_https() ) {
 			return '';
 		}
 		$parts = explode( '?', $uri, 2 );

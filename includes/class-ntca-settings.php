@@ -270,6 +270,7 @@ class NTCA_Settings {
 				'mobile'    => (int) $s['mobile'],
 				'dir'       => NTCA_CACHE_DIR,
 				'hosts'     => array( $host ),
+				'scheme'    => 'https' === wp_parse_url( home_url( '/' ), PHP_URL_SCHEME ) ? 'https' : 'http',
 				'cookies'   => self::bypass_cookies( $s ),
 				'exclude'   => self::bypass_urls( $s ),
 				'ignore_qs' => array_map( 'strtolower', $s['ignore_qs'] ),

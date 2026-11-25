@@ -133,6 +133,14 @@ class NTCA_Cache {
 		if ( '' === ntca_cache_file_for_request( ntca_serve_config() ) ) {
 			return 'request';
 		}
+		// The site address is https, but WordPress thinks this request is http, so it builds the
+		// page with http:// links. Such a page is never stored (it would break on https).
+		if ( 'https' === wp_parse_url( home_url( '/' ), PHP_URL_SCHEME ) && ! is_ssl() ) {
+			if ( function_exists( 'ntca_serve_is_https' ) && ntca_serve_is_https() ) {
+				self::note( 'proxy' ); // Visitor came over https: a proxy setting is missing on the server.
+			}
+			return 'http';
+		}
 		return '';
 	}
 
@@ -187,7 +195,7 @@ class NTCA_Cache {
 	 * Remember why pages that could be cached were or were not stored, so the dashboard can explain it.
 	 * Written at most once every 10 minutes per reason, so busy sites do not write on every visit.
 	 *
-	 * @param string $reason ok|no-close|cookie|donotcache|write.
+	 * @param string $reason ok|no-close|cookie|donotcache|write|proxy.
 	 * @param string $detail Extra detail (a cookie name).
 	 */
 	private static function note( $reason, $detail = '' ) {
@@ -217,7 +225,7 @@ class NTCA_Cache {
 		$h  = is_array( $h ) ? $h : array();
 		$ok = isset( $h['ok']['t'] ) ? (int) $h['ok']['t'] : 0;
 		$out = array();
-		foreach ( array( 'no-close', 'cookie', 'donotcache', 'write' ) as $r ) {
+		foreach ( array( 'no-close', 'cookie', 'donotcache', 'write', 'proxy' ) as $r ) {
 			if ( isset( $h[ $r ]['t'] ) && (int) $h[ $r ]['t'] > time() - DAY_IN_SECONDS && (int) $h[ $r ]['t'] >= $ok - 600 ) {
 				$out[ $r ] = $h[ $r ];
 			}

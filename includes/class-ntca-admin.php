@@ -38,7 +38,12 @@ class NTCA_Admin {
 	public static function maybe_config() {
 		$cfg = NTCA_Settings::own_config();
 		if ( ! is_array( $cfg ) || empty( $cfg['version'] ) || NTCA_VERSION !== $cfg['version'] ) {
+			$old_rules = is_array( $cfg ) && ! isset( $cfg['scheme'] );
 			NTCA_Settings::write_config();
+			if ( $old_rules ) {
+				// Before 1.1.5 a page built for an http:// request could be stored and shown on https://.
+				NTCA_Cache::purge_all();
+			}
 		}
 	}
 
@@ -555,6 +560,10 @@ class NTCA_Admin {
 				case 'donotcache':
 					/* translators: %s: page address */
 					$msg = sprintf( __( 'Some pages are not cached because another plugin asks for that (DONOTCACHEPAGE, seen on %s). This is normal for forms or personal pages, but if it happens on every page, check which plugin sets it.', 'nodethemes-cache-ai' ), $where );
+					break;
+				case 'proxy':
+					/* translators: %s: page address */
+					$msg = sprintf( __( 'Pages are not being cached: visitors use https, but WordPress sees the request as http (seen on %s), so it builds the page with http:// links that browsers block. Your site is probably behind a proxy or Cloudflare: ask your host to pass the HTTPS setting to PHP, or add the standard HTTP_X_FORWARDED_PROTO check to wp-config.php.', 'nodethemes-cache-ai' ), $where );
 					break;
 				default:
 					$msg = __( 'Pages could not be saved: the folder wp-content/cache/nodethemes-cache-ai is not writable. Ask your host to make wp-content writable.', 'nodethemes-cache-ai' );

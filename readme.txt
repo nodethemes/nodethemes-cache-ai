@@ -4,7 +4,7 @@ Tags: cache, page cache, performance, minify, lazy load
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.4
+Stable tag: 1.1.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -92,6 +92,10 @@ When this optimization is on and a page uses a Google Fonts stylesheet, your ser
 * Deactivating the plugin removes the cached pages, the advanced-cache.php drop-in and the WP_CACHE line it added. Uninstalling also removes its settings and history.
 
 == Changelog ==
+
+= 1.1.5 =
+* Fix: on an https site, a page requested over plain http:// is no longer cached or served from the cache. Before, such a copy linked its CSS and JS with http://, browsers blocked them on the https page, and the site showed without its styles (for example huge icons on phones). Updating clears the old cached pages once.
+* New: the Dashboard warns when visitors use https but WordPress sees the request as http (a proxy or Cloudflare setting missing on the server), because then pages cannot be cached safely.
 
 = 1.1.4 =
 * New: the Dashboard explains why pages are not being cached: a theme that does not end its pages with </html>, a cookie set on every visit (with its name), another plugin asking not to cache (DONOTCACHEPAGE), or a cache folder that is not writable.
